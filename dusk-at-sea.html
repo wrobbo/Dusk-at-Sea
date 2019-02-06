@@ -1,0 +1,180 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+      <title>Dusk at Sea</title>
+      <style>
+        
+        /* Setting background for canvas as a gradient to look like the sky. */
+        canvas { background: linear-gradient(to bottom, #1e528e 0%,#265889 50%,#9da671 100%); }
+        
+      </style>
+  </head>
+  <body>
+      
+      <!-- Setting up the canvas' id, width and height. -->
+      <canvas id="c" width="1024" height="768"></canvas>
+      
+    <script>
+        
+        // Calling the canvas itself and setting a context variable to make it easier to
+        // make it easier to draw 2d shapes.
+        var c = document.getElementById("c");
+        var ctx = c.getContext("2d");
+        
+        // Variable and source for the sound also setting the sound to play when the script loads
+        // a variable is set so it is easier to reference later so we can alter the audio.
+        var snd = new Audio("sound/seaside.mp3");
+        
+        // Boolean to state whether audio is playing or not.
+        var playing = false;
+        
+        // Variable to set the amount of stars that will be drawn on screen.
+        var starAmount = 300;
+        
+        // Array to store the data (size, position, etc) for the stars.
+        var starArray = [];
+        
+        // Setting variables for width and height to be
+        // used in the sine wave.
+        var cw = c.width;
+        var ch = c.height;
+        
+        // Global variable for the width of the screen.
+        var w = 1024;
+        
+        // Variable for sine wave aimplitude.
+        var amplitude = 50;
+        
+        // Variable for sine wave frequency.
+        var frequency = .002;
+        
+        // Variable for the frames in the Draw function (constantly changing variable).
+        var frames = 0;
+        
+        // global variable set for the mouse position.
+        var mouseX = 1024;
+        var mouseY = 768;
+        
+        // putPoint function gets the mouse position and the variables inside are updated
+        // based upon the position of the mouse.
+        var putPoint = function(e) {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        }
+        
+        // Event listener to check if the sound has finished playing and if it has, it will
+        // set the time to 0 and play it again, essentially looping it.
+        snd.addEventListener('ended', function() {
+            this.currentTime = 0;
+            this.play();
+        }, false);
+        
+        // Adding a listener for the mouse movement and parsing the mouse data into the
+        // putPoint function.
+        c.addEventListener("mousemove", putPoint);
+        
+        // event listener for clicking on the screen to mute or unmute the audio
+        document.getElementById('c').addEventListener('click', function (evt) {
+            if (!playing) {
+            snd.play();
+            playing = true;
+        } else {
+            snd.pause();
+            playing = false;
+        }
+        })
+      
+        // Star object which is responsible for taking the variables parsed in 
+        // from the for loop below and also holds the draw function which is responsible
+        // for actually drawing the stars.
+        function Star(sx, sy, starSize) {
+            this.sx = sx;
+            this.sy = sy;
+            this.starSize = starSize;
+            this.draw = function() {
+                ctx.beginPath();
+                // shadowBlur to simulate the shining of a star
+                ctx.shadowBlur = 25;
+                ctx.shadowColor = "white";
+                ctx.arc(this.sx, this.sy, this.starSize, 0, Math.PI*2, false);
+                ctx.fill();
+            }
+        }
+        
+        // For loop to generate data (size, position, etc) for the stars, store them in
+        // the starArray and then generate these stars by calling the Star function and
+        // parsing the generated data into the starArray to be use by the Star object.
+        for (var i = 0; i < starAmount; i++) {
+            var sx = (Math.random() * c.width);
+            var sy = (Math.random() * c.height);
+            var starSize = (Math.random() * 1.5);
+            starArray.push(new Star(sx, sy, starSize));
+        }
+        
+        // drawStars function is reponsible for taking all the data stored in the starArray
+        // and drawing the stars based on that data using the commands in the Star.draw
+        // object.
+        function drawStars() {
+            for (var i = 0; i < starArray.length; i++) {
+                var starFill = Math.random();
+                starArray[i].draw();
+                ctx.fillStyle = "white";
+            }
+        }        
+        
+        // Draw function is responsible for the drawing and animation of the sine wave and
+        // also for the calling of the drawStars function so everything can be drawn on
+        // screen at once.
+        function draw() {
+            // Adding one to the frames variable each time the Draw function is looped to
+            // create a constantly changing variable which is vital for animation.
+            frames++;
+            phi = frames / 30;
+            ctx.clearRect(0, 0, cw, ch); 
+            
+            // Text for the instructions and title in the top left of the screen.
+            ctx.fillStyle = "white";
+            ctx.font = "50px Arial";
+            ctx.fillText("Dusk at Sea.",10,50);
+            ctx.font = "15px Arial";
+            ctx.fillText("Move the mouse from left to right to change the height and frequency of the wave.", 13, 75);
+            ctx.fillText("Click anywhere on the screen to mute or unmute the sound.", 13, 93);
+            
+            // Begin path and call drawStars function so stars can be drawn within the
+            // animation so they are not cleared after each loop.
+            ctx.beginPath();    
+            drawStars();
+            
+            // ShadowBlur set to 0 so the sine wave does not have any blur.
+            ctx.shadowBlur = 0;
+            
+            // Begin the path for the sine wave and plot the first point.
+            ctx.beginPath();
+            ctx.moveTo(0, ch);
+           
+            // for loop for drawing main bulk the sine wave. The Math.sin() function along
+            // with the loop creates a constantly changing variable which is respoinsible
+            // for the movement of the wave.
+            for (var x = 0; x < w; x++) {
+                y = Math.sin(x * frequency + phi) * ((amplitude / 600) *  mouseX);
+                ctx.lineTo(x, y + 600); 
+            }
+            
+            // Setting the end points for the sine wave.
+            ctx.lineTo(w, ch);
+            ctx.lineTo(0, ch);
+            
+            // Request animation frame so window is animated.
+            requestId = window.requestAnimationFrame(draw);
+            
+            // Fill with blue.
+            ctx.fillStyle = "#3055A6"
+            ctx.fill();
+        }  
+        
+        // Finally call the Draw function to run the script and put it on screen.
+        draw();
+        
+    </script>
+  </body>
+</html>
